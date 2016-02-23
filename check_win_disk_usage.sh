@@ -11,12 +11,13 @@
 # Author:     Claudio Kuenzler www.claudiokuenzler.com
 # History:
 # 20151127    Started script (based on check_win_net_usage.sh)
+# 20160223    Do not try to auto-lookup plugin, use pluginlocation var
 #############################################################################
 # Set path to the location of your Nagios plugin (check_nt)
-export PATH=$PATH:/usr/lib/nagios/plugins:/usr/local/nagios/libexec
+pluginlocation="/usr/lib/nagios/plugins"
 #############################################################################
 # Help
-help="check_win_disk_usage.sh (c) 2015 Claudio Kuenzler (GPLv2)\n
+help="check_win_disk_usage.sh (c) 2015-2016 Claudio Kuenzler (GPLv2)\n
 Usage: ./check_win_disk_usage.sh -H host [-p port] [-s password] -d driveletter
 Requirements: check_nt plugin and NSClient++ installed on target server
 \nOptions:\n-H Hostname of Windows server to check
@@ -33,9 +34,9 @@ if [ "${1}" = "--help" -o "${#}" = "0" ];
 fi
 #############################################################################
 # Some people might forget to set the plugin path (pluginlocation)
-if [ ! -x check_nt ]
+if [ ! -x ${pluginlocation}/check_nt ]
 then
-echo "CRITICAL - Plugin check_nt not found in $PATH"; exit 2
+echo "CRITICAL - Plugin check_nt not found in ${pluginlocation}"; exit 2
 fi
 #############################################################################
 # Get user-given variables
@@ -65,12 +66,12 @@ if [[ -z ${drive} ]]; then echo "UNKNOWN - No drive letter given"; exit 3; fi
 # The checks itself (with password)
 if [[ -n ${password} ]]
 then
-bytes_read=$(check_nt -H ${host} -p ${insertport} -s ${password} -v COUNTER -l "\\LogicalDisk(${drive})\\Disk Read Bytes/sec")
-bytes_write=$(check_nt -H ${host} -p ${insertport} -s ${password} -v COUNTER -l "\\LogicalDisk(${drive})\\Disk Write Bytes/sec")
+bytes_read=$(${pluginlocation}/check_nt -H ${host} -p ${insertport} -s ${password} -v COUNTER -l "\\LogicalDisk(${drive})\\Disk Read Bytes/sec")
+bytes_write=$(${pluginlocation}/check_nt -H ${host} -p ${insertport} -s ${password} -v COUNTER -l "\\LogicalDisk(${drive})\\Disk Write Bytes/sec")
 else
 # Without password
-bytes_read=$(check_nt -H ${host} -p ${insertport} -v COUNTER -l "\\LogicalDisk(${drive})\\Disk Read Bytes/sec")
-bytes_write=$(check_nt -H ${host} -p ${insertport} -v COUNTER -l "\\LogicalDisk(${drive})\\Disk Write Bytes/sec")
+bytes_read=$(${pluginlocation}/check_nt -H ${host} -p ${insertport} -v COUNTER -l "\\LogicalDisk(${drive})\\Disk Read Bytes/sec")
+bytes_write=$(${pluginlocation}/check_nt -H ${host} -p ${insertport} -v COUNTER -l "\\LogicalDisk(${drive})\\Disk Write Bytes/sec")
 fi
 
 # Catch connection error
